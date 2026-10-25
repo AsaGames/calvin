@@ -21,6 +21,14 @@ A browser game made by Asa for Room 310. Calvin Boo Boo Ba Boo, a rockhopper pen
 6. Climb the stairs to Room 310
 7. Explore the classroom and find the penguin bag
 
+## Sidequests
+
+From the title screen, tap **Sidequests**:
+
+- **Macarena Dance Party:** tap Dance! on the beat and Calvin does the moves (original music).
+- **Trampoline Park:** tap as Calvin lands to bounce higher, tap in the air to flip.
+- **Taekwondo Dojo:** punch, kick or chop to break boards and earn belts up to black belt.
+
 ## Scoring
 
 Score = fish × 100 + birds hopped × 50 + a bonus for being fast. There are 50 fish to find. High scores are saved only on the device you play on.
