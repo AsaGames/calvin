@@ -1612,21 +1612,22 @@ const BELTS=[['White','#ffffff'],['Yellow','#f7d21a'],['Orange','#f08a2c'],['Gre
 const TKLAB={punch:'Punch!',kick:'Kick!',chop:'Chop!'};
 QUESTS.tkd={
   name:'Taekwondo Dojo',icon:'tkd',
-  intro:'Calvin Boo Boo Ba Boo is learning taekwondo! Look at the board, then tap the right move: Punch, Kick or Chop. Every 4 boards you earn a new belt, all the way to black belt. You have 45 seconds!',
-  buttons:[{id:'punch',label:'Punch',icon:'punch',key:'ArrowLeft'},{id:'kick',label:'Kick',icon:'kick',key:'ArrowUp'},{id:'chop',label:'Chop',icon:'chop',key:'ArrowRight'}],
+  intro:'Calvin Boo Boo Ba Boo is learning taekwondo! Watch the marker slide back and forth. Tap Hi-yah! when it is in the green zone to break the board. Hit the middle for a Perfect! Every 4 boards you earn a new belt, all the way to black belt. You have 45 seconds!',
+  buttons:[{id:'a',label:'Hi-yah!',icon:'tkd',key:' '}],
   init(){return{time:45,score:0,boards:0,belt:0,target:null,wait:.5,anim:null,pieces:[],pops:[],last:[],pose:{...REST,aR:-.35,aL:-.35},cur:{...REST,aR:-.35,aL:-.35},promo:0}},
   spawn(){const kinds=['punch','kick','chop'];let k;do{k=kinds[Math.floor(Math.random()*3)]}while(SQ.last.length>=2&&SQ.last.slice(-2).every(x=>x===k));SQ.last.push(k);
-    const lim=Math.max(1.6,3.2-SQ.boards*.07);SQ.target={kind:k,t:0,lim};setWant(k)},
+    SQ.target={kind:k,zc:.3+Math.random()*.45,w:Math.max(.1,.3-SQ.boards*.007),ph:Math.random()*.2,spd:Math.min(2.2,.85+SQ.boards*.05),wob:0}},
+  marker(){const p=SQ.target.ph%2;return p<1?p:2-p},
   update(dt){
     SQ.time-=dt;$('sideTime').textContent=Math.max(0,Math.ceil(SQ.time))+'s';
     if(!SQ.target&&!SQ.anim){SQ.wait-=dt;if(SQ.wait<=0)this.spawn()}
-    if(SQ.target){SQ.target.t+=dt;if(SQ.target.t>SQ.target.lim){sidePop(VW*.62,VH*.3,'Too slow!','#c8433a',22);SQ.target=null;SQ.wait=.4;setWant(null)}}
+    if(SQ.target){if(!SQ.anim)SQ.target.ph+=SQ.target.spd*dt;SQ.target.wob=Math.max(0,SQ.target.wob-dt)}
     if(SQ.anim){const a=SQ.anim;a.t+=dt;
       if(!a.hitDone&&a.t>=.14){a.hitDone=true;
-        if(SQ.target&&SQ.target.kind===a.kind){const left=1-SQ.target.t/SQ.target.lim;SQ.score+=100+Math.round(left*100);SQ.boards++;this.breakBoard(SQ.target.kind);SQ.target=null;SQ.wait=.35;setWant(null);
-          sidePop(VW*.3,VH*.3,'Hi-yah!','#c8433a',30);
+        if(SQ.target&&a.ok){SQ.score+=100+(a.perfect?100:40);SQ.boards++;this.breakBoard(SQ.target.kind);SQ.target=null;SQ.wait=.35;
+          sidePop(VW*.3,VH*.3,a.perfect?'Perfect! Hi-yah!':'Hi-yah!',a.perfect?'#2f9e5a':'#c8433a',a.perfect?26:30);
           if(SQ.boards%4===0&&SQ.belt<BELTS.length-1){SQ.belt++;SQ.promo=2.2;[523,659,784,1047,1319].forEach((f,i)=>toneAt(clockNow()+i*.1,f,f,.2,'triangle',.13))}}
-        else if(SQ.target){sidePop(VW*.3,VH*.3,'Try '+TKLAB[SQ.target.kind],'#1d4fa0',22);noiseAt(clockNow(),.15,.08,3000)}
+        else if(SQ.target){SQ.target.wob=.4;sidePop(VW*.3,VH*.3,'Almost!','#1d4fa0',24);toneAt(clockNow(),160,90,.15,'triangle',.15)}
         else noiseAt(clockNow(),.15,.08,3000)}
       if(a.t>.42)SQ.anim=null}
     const a=SQ.anim,p=SQ.pose;
@@ -1636,12 +1637,12 @@ QUESTS.tkd={
     SQ.promo=Math.max(0,SQ.promo-dt);
     for(const q of SQ.pops){q.life-=dt;q.y-=24*dt}SQ.pops=SQ.pops.filter(q=>q.life>0);
     $('sideScore').textContent=SQ.score;
-    if(SQ.time<=0){setWant(null);endQuest(SQ.score,`${SQ.boards} boards broken · ${BELTS[SQ.belt][0]} belt`)}
+    if(SQ.time<=0){endQuest(SQ.score,`${SQ.boards} boards broken · ${BELTS[SQ.belt][0]} belt`)}
   },
   boardPos(kind){const fy=VH*.78,tx=VW*.6;return kind==='kick'?{x:tx,y:fy-Math.min(VH*.42,270),hor:false}:kind==='punch'?{x:tx,y:fy-Math.min(VH*.27,170),hor:false}:{x:tx,y:fy-46,hor:true}},
   breakBoard(kind){const b=this.boardPos(kind);for(const s of [-1,1])SQ.pieces.push({x:b.x+(b.hor?s*24:0),y:b.y+(b.hor?0:s*24),vx:(b.hor?s*120:220),vy:-260+(s*60),r:0,vr:s*8,hor:b.hor,life:1.2});
     noiseAt(clockNow(),.18,.4,800);toneAt(clockNow(),120,50,.2,'sine',.35)},
-  press(id){if(SQ.anim)return;SQ.anim={kind:id,t:0,hitDone:false};if(id==='kick')toneAt(clockNow(),300,150,.2,'sine',.06)},
+  press(){if(SQ.anim||!SQ.target)return;const d=Math.abs(this.marker()-SQ.target.zc);SQ.anim={kind:SQ.target.kind,t:0,hitDone:false,ok:d<=SQ.target.w/2,perfect:d<=SQ.target.w/6};toneAt(clockNow(),300,150,.2,'sine',.06)},
   render(){
     const fy=VH*.78;
     ctx.fillStyle='#d9b483';ctx.fillRect(0,0,VW,fy);ctx.fillStyle='#c79e6b';for(let x=0;x<VW;x+=90)ctx.fillRect(x,0,3,fy);
@@ -1656,12 +1657,15 @@ QUESTS.tkd={
     ctx.fillStyle='#14181f';ctx.fillRect(0,fy+120,VW,VH);
     const ch=Math.min(VH*.42,260),cx=VW*.3;
     // board stand + target
-    if(SQ&&SQ.target){const b=this.boardPos(SQ.target.kind);
+    if(SQ&&SQ.target){const b=this.boardPos(SQ.target.kind);ctx.save();if(SQ.target.wob>0)ctx.translate(Math.sin(t*60)*4,0);
       if(b.hor){ctx.fillStyle='#8f877a';ctx.fillRect(b.x-60,fy-40,26,40);ctx.fillRect(b.x+34,fy-40,26,40);ctx.fillStyle='#e8c98f';ctx.fillRect(b.x-64,b.y-6,128,14);ctx.strokeStyle='#b8925a';ctx.lineWidth=2;ctx.strokeRect(b.x-64,b.y-6,128,14)}
-      else{ctx.fillStyle='#4a4f58';ctx.fillRect(b.x+34,b.y,8,fy-b.y);ctx.fillRect(b.x+18,fy-6,40,6);ctx.fillRect(b.x+14,b.y-6,28,12);ctx.fillStyle='#e8c98f';ctx.fillRect(b.x-7,b.y-56,14,112);ctx.strokeStyle='#b8925a';ctx.lineWidth=2;ctx.strokeRect(b.x-7,b.y-56,14,112)}
-      const left=1-SQ.target.t/SQ.target.lim,bx=b.x,byy=b.y-(b.hor?60:96);
-      ctx.fillStyle='#fffaf0';rr(bx-62,byy-26,124,52,14);ctx.fill();ctx.strokeStyle='#1f2a44';ctx.lineWidth=3;ctx.stroke();signText(TKLAB[SQ.target.kind],bx,byy-2,24,'#c8433a');
-      ctx.fillStyle='#e3dccb';ctx.fillRect(bx-50,byy+16,100,6);ctx.fillStyle=left>.35?'#2f9e5a':'#c8433a';ctx.fillRect(bx-50,byy+16,100*left,6)}
+      else{ctx.fillStyle='#4a4f58';ctx.fillRect(b.x+34,b.y,8,fy-b.y);ctx.fillRect(b.x+18,fy-6,40,6);ctx.fillRect(b.x+14,b.y-6,28,12);ctx.fillStyle='#e8c98f';ctx.fillRect(b.x-7,b.y-56,14,112);ctx.strokeStyle='#b8925a';ctx.lineWidth=2;ctx.strokeRect(b.x-7,b.y-56,14,112)}ctx.restore();
+      const T=SQ.target,bx=b.x,byy=Math.max(118,b.y-(b.hor?110:130)),mw=210,mx=bx-mw/2,my=byy+30;
+      ctx.fillStyle='#fffaf0';rr(mx-12,byy-24,mw+24,82,14);ctx.fill();ctx.strokeStyle='#1f2a44';ctx.lineWidth=3;ctx.stroke();signText(TKLAB[T.kind],bx,byy-2,22,'#c8433a');
+      ctx.fillStyle='#e3dccb';rr(mx,my,mw,18,9);ctx.fill();
+      ctx.fillStyle='#5bbf6a';ctx.fillRect(mx+(T.zc-T.w/2)*mw,my,T.w*mw,18);ctx.fillStyle='#2f7a52';ctx.fillRect(mx+(T.zc-T.w/6)*mw,my,T.w/3*mw,18);
+      ctx.strokeStyle='#1f2a44';ctx.lineWidth=2;rr(mx,my,mw,18,9);ctx.stroke();
+      const mk=mx+this.marker()*mw;ctx.fillStyle='#1f2a44';ctx.beginPath();ctx.moveTo(mk-9,my-10);ctx.lineTo(mk+9,my-10);ctx.lineTo(mk,my+4);ctx.closePath();ctx.fill();ctx.fillRect(mk-2,my,4,22)}
     if(SQ)for(const pc of SQ.pieces){ctx.save();ctx.translate(pc.x,pc.y);ctx.rotate(pc.r);ctx.fillStyle='#e8c98f';if(pc.hor)ctx.fillRect(-30,-6,60,14);else ctx.fillRect(-7,-28,14,56);ctx.restore()}
     // Calvin
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(cx,fy+4,ch*.28,8,0,0,7);ctx.fill();

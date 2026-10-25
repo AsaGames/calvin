@@ -27,7 +27,7 @@ From the title screen, tap **Sidequests**:
 
 - **Macarena Dance Party:** tap Dance! on the beat and Calvin does the moves (original music).
 - **Trampoline Park:** tap as Calvin lands to bounce higher, tap in the air to flip.
-- **Taekwondo Dojo:** punch, kick or chop to break boards and earn belts up to black belt.
+- **Taekwondo Dojo:** tap Hi-yah! when the marker is in the green zone to break boards and earn belts up to black belt.
 
 ## Scoring
 
